@@ -47,7 +47,11 @@ public class MainController {
 	 */
 	@CrossOrigin(origins = "http://localhost:3000")
 	@RequestMapping(value = "/address")
-	public @ResponseBody List<Official> addressAPI(@RequestParam String address) throws JsonParseException, JsonMappingException, IOException {
+	public @ResponseBody List<Official> addressAPI(@RequestParam String street,
+												   @RequestParam String city,
+												   @RequestParam String state)
+												   throws JsonParseException, JsonMappingException, IOException {
+		String address = street + " " + city + " " + state;
 		Map<String, Object> queryResult = apiUtility.retrieveRepresentativeInfoByAddress(address);
 		
 		List<String> officialsNames = apiUtility.getOfficialsNames(queryResult);

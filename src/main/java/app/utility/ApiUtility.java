@@ -1,6 +1,12 @@
 package app.utility;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -9,6 +15,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -28,23 +35,67 @@ public class ApiUtility {
 	 * Makes GET request to google API to capture information of officials given a specified address.
 	 * @param address
 	 * @return
+	 * @throws MalformedURLException 
+	 * @throws ProtocolException 
 	 * @throws JsonParseException
 	 * @throws JsonMappingException
 	 * @throws IOException
 	 */
-	public Map<String, Object> retrieveRepresentativeInfoByAddress(String address) throws JsonParseException, JsonMappingException, IOException {
+	public Map<String, Object> retrieveRepresentativeInfoByAddress(String address) throws IOException {
 		address = address.replace(" ", "%20");
-	    final String uri = "https://www.googleapis.com/civicinfo/v2/representatives?address=" + address +
-	    				   "includeOffices=true&key=AIzaSyC8dj7swOUYCkexey7aNhwROCbEX2UGQUU";
+		URL obj = new URL("https://www.googleapis.com/civicinfo/v2/representatives?address=" + address + 
+				"&includeOffices=true&key=AIzaSyC8dj7swOUYCkexey7aNhwROCbEX2UGQUU");
+		
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		con.setRequestMethod("GET");
+		if (con.getResponseCode() == HttpURLConnection.HTTP_OK) { // success
+			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer response = new StringBuffer();
 
-	    RestTemplate restTemplate = new RestTemplate();
-	    String json = restTemplate.getForObject(uri, String.class);
-	    ObjectMapper mapper = new ObjectMapper();
-	    
-	    @SuppressWarnings("unchecked")
-		Map<String,Object> apiRetrievalResult = mapper.readValue(json, Map.class);
-	    return apiRetrievalResult;
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+			ObjectMapper mapper = new ObjectMapper();
+			
+			@SuppressWarnings("unchecked")
+			Map<String,Object> apiRetrievalResult = mapper.readValue(response.toString(), Map.class);
+			return apiRetrievalResult;
+		} else {
+			// Do something . . .
+			return null;
+		}
 	}
+
+	/**
+	 * Makes GET request to google API to capture information of officials given a specified address.
+	 * @param address
+	 * @return
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+//	public Map<String, Object> retrieveRepresentativeInfoByAddress(String address) throws JsonParseException, JsonMappingException, IOException {
+//		//address = address.replace(" ", "%20");
+//	    String uri = "https://www.googleapis.com/civicinfo/v2/representatives";
+//	    this.sendGET();
+//	    
+//	    UriComponentsBuilder builder = UriComponentsBuilder
+//	    	    .fromUriString(uri)
+//	    	    // Add query parameter
+//	    	    .queryParam("address", address)
+//	    	    .queryParam("includeOffices", "true")
+//	    	    .queryParam("key", "AIzaSyC8dj7swOUYCkexey7aNhwROCbEX2UGQUU");
+//	    
+//	    RestTemplate restTemplate = new RestTemplate();
+//	    String response = restTemplate.getForObject(builder.toUriString(), String.class);
+//	    ObjectMapper mapper = new ObjectMapper();
+//	    
+//	    @SuppressWarnings("unchecked")
+//		Map<String,Object> apiRetrievalResult = mapper.readValue(response, Map.class);
+//	    return apiRetrievalResult;
+//	}
 	
 	/**
 	 * Combines the results of getOffices and getOfficialsNames to create and return a list of Officials.
